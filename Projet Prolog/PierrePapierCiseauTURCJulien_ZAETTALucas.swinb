@@ -1,0 +1,409 @@
+<div class="notebook">
+
+<div class="nb-cell markdown" name="md1">
+# Pierre-Papier-Ciseaux
+
+Ce mini-projet ProLog a pour cadre le jeu "pierre/papier/ciseaux" (cf. [wpkd](https://fr.wikipedia.org/wiki/Pierre-papier-ciseaux)). 
+
+L'objectif est de mettre au point plusieurs stratégies de jeu (des IA) et d'étudier l'efficacité de chacune. Trois familles de stratégie sont possibles :
+
+* stratégie indépendante de l'historique (IA-0, hors stratégie de pur hasard)
+* stratégie en fonction du dernier coup ou de quelques derniers coups (IA-1, IA-2, ...) pour simuler un comportement et une mémoire humaine
+* stratégie en fonction de l'ensemble de l'historique des coups précédents (IA-N) pour essayer de tirer profit de la puissance de la machine
+</div>
+
+<div class="nb-cell markdown" name="md2">
+N.B. : la dernière stratégie (IA-N) devraient pouvoir l'emporter sur des stratégies IA-0, IA-1, ... "simples" (défi)
+
+Un début de code est fourni ci-après, comprenant :
+* une partie consacrée aux stratégies, avec un exemple de stratégie simple et des suggestions d'autres stratégies plus complexes
+* une partie consacrée à la gestion d'une partie et la comparaison d'une stratégie face à d'autres stratégies
+</div>
+
+<div class="nb-cell markdown" name="md3">
+Tout cela est à compléter, adapter, améliorer, etc.
+
+rem. : librairies chargées (dif, clpq)
+</div>
+
+<div class="nb-cell program" data-background="true" name="p1">
+:- use_module(library(dif)).		% Sound inequality
+:- use_module(library(clpq)).		% Constraints over rational numbers
+</div>
+
+<div class="nb-cell markdown" name="md4">
+## 1. Stratégies
+
+Les stratégies sont des prédicats ayant le profil suivant :
+
+```
+%% nomStratégie(en entrée : un entier NumeroDuCoup, une liste Historique, en sortie : un coup CoupProposé)
+%%   rem. l'historique est la liste des coups joués
+%%   ex. d'historique : [[pierre,papier],[pierre,pierre],[papier,ciseaux]]
+%%   pour faciliter l'accès à l'historique, le dernier coup joué est en premier dans la liste
+```
+
+**Important,** pour une stratégie IA-0, l'historique ne doit pas être utilisée. 
+
+**Important,** pour une stratégie IA-1, seul le premier élément de l'historique peut être utilisé. Pour une stratégie IA-2, seuls les deux premiers éléments de l'historique peuvent être utilisés. etc. 
+
+### 1.0 Stratégies IA-0
+
+Exemple :
+</div>
+
+<div class="nb-cell program" data-background="true" name="p3">
+%% strategieCst de type IA-0 (stratégie constante) 
+%% stratégie simple, constante qui donne toujours la pierre
+strategieCst(_N,_R,pierre).
+</div>
+
+<div class="nb-cell markdown" name="md5">
+Suggestions pour d'autres stratégies de type IA-0
+</div>
+
+<div class="nb-cell program" data-background="true" name="p2">
+%% strategie01 de type IA-0 (stratégie qui dépend seulement du numéro de la manche) 
+%%% stratégie simple qui alterne le papier et les ciseaux, par exemple selon le numéro de la manche (pair=&gt;papier, impair=&gt;ciseaux)
+strategie01(Num,_R,papier):-
+    mod(Num,2)=:=1.
+strategie01(Num,_R,ciseaux):-
+    mod(Num,2)=:=0.
+
+%% strategie02 de type IA-0 (stratégie qui dépend seulement du numéro de la manche) 
+%%% stratégie qui répète un cycle de coups (si le cycle est court, c'est une stratégie qui peut paraitre 'simple')
+strategie02(Num,_R,papier):-
+    mod(Num,4)=:=1.
+strategie02(Num,_R,papier):-
+    mod(Num,4)=:=2.
+strategie02(Num,_R,pierre):-
+    mod(Num,4)=:=3.
+strategie02(Num,_R,ciseaux):-
+    mod(Num,4)=:=0.
+
+%% strategie03 de type IA-0 (stratégie qui dépend seulement du numéro de la manche) 
+%%% stratégie qui détermine le coup de manière difficile à prévoir en fonction du numéro de la manche
+strategie03(Num,_R,papier):-
+    mod(Num//10,2)=:=0,
+    mod(Num,2)=:=0.
+strategie03(Num,_R,ciseaux):-
+    mod(Num//10,2)=:=0,
+    mod(Num,5)=:=0.
+strategie03(Num,_R,pierre):-
+    mod(Num//10,2)=:=0,
+    mod(Num,2)=:=1.
+strategie03(Num,_R,ciseaux):-
+    mod(Num//10,2)=:=1,
+    mod(Num,2)=:=0.
+strategie03(Num,_R,pierre):-
+    mod(Num//10,2)=:=1,
+    mod(Num,5)=:=0.
+strategie03(Num,_R,papier):-
+    mod(Num//10,2)=:=1,
+    mod(Num,2)=:=1.
+</div>
+
+<div class="nb-cell markdown" name="md6">
+### 1.1 Stratégies IA-1, IA-2, ...
+
+Exemple :
+</div>
+
+<div class="nb-cell program" data-background="true" name="p6">
+%% strategie11 de type IA-1 (stratégie qui dépend de la dernière manche) 
+%% stratégie qui répète le dernier coup du joueur 2
+strategie11(_N,[],papier). %% papier, ou n'importe quoi, quand il n'y a pas de dernier coup (si c'est le premier coup)
+strategie11(_N,[[_C1,C2]|_L],C2).
+</div>
+
+<div class="nb-cell markdown" name="md8">
+Suggestions pour d'autres stratégies de type IA-1, IA-2, ...
+</div>
+
+<div class="nb-cell program" data-background="true" name="p4">
+%% strategie12 de type IA-1 (stratégie qui dépend de la dernière manche) 
+%% stratégie pour le joueur 1 qui joue en fonction du dernier coup du joueur 2 pour le contrer en supposant que le joueur 2 ne changera pas de coup
+strategie12(_N,[],papier).
+strategie12(_N,[[_C1,pierre]|_L],papier).
+strategie12(_N,[[_C1,papier]|_L],ciseaux).
+strategie12(_N,[[_C1,ciseaux]|_L],pierre).
+
+%% strategie13 de type IA-1 (stratégie qui dépend de la dernière manche) 
+%% stratégie pour le joueur 1 qui joue en fonction de son dernier coup et suppose que le joueur 2 va vouloir contrer ce dernier coup
+strategie13(_N,[],papier).
+strategie13(_N,[[pierre,_C2]|_L],ciseaux).
+strategie13(_N,[[papier,_C2]|_L],pierre).
+strategie13(_N,[[ciseaux,_C2]|_L],papier).
+
+%% strategie14 de type IA-1 (stratégie qui dépend de la dernière manche) 
+%% stratégie pour le joueur 1 qui joue en fonction de son dernier coup et le répète s'il a été gagnant
+strategie14(_N,[],papier).
+strategie14(_N,[[pierre,ciseaux]|_L],pierre).
+strategie14(_N,[[ciseaux,papier]|_L],ciseaux).
+strategie14(_N,[[papier,pierre]|_L],papier).
+strategie14(_N,[[papier,C2]|_L],ciseaux) :-
+    C2 \= pierre.
+strategie14(_N,[[ciseaux,C2]|_L],pierre) :-
+    C2 \= papier.
+strategie14(_N,[[pierre,C2]|_L],papier) :-
+    C2 \= ciseaux.
+
+%% strategie31 de type IA-3  (stratégie qui dépend de l'analyse des 3 dernières manches) 
+%% stratégie pour le joueur 1 qui regarde sur ces dernières manches si l'un de ses coups est plus favorable
+eval([],[],[],papier).
+
+eval([],[],[R3|_L3],R3).
+eval([],[R2|_L2],[],R2).
+eval([R1|_L1],[],[],R1).
+
+eval([R1|_L1],[],[_R3|_L3],R1).
+eval([R1|_L1],[_R2|_L2],[],R1).
+eval([],[R2|_L2],[_R3|_L3],R2).
+
+eval([R1|L1],[R1|L1],[R3|_L3],R1) :-
+    R1 \= R3.
+eval([R1|L1],[R2|_L2],[R1|L1],R1) :-
+    R1 \= R2.
+eval([_R1|_L1],[R2|L2],[R2|L2],R2).
+
+eval([R1|_L1],[R2|_L2],[R3|_L3],R1) :-
+    R1 \= R2,
+    R2 \= R3,
+    R1 \= R3.
+
+%% gagne prend en paramètre une partie et donne une liste contenant le coup gagnant du joueu 1
+%% Si les deux coup sont égaux ou que le joueur 1 perd, la liste est vide
+gagne([C,C],[]).
+gagne([papier,pierre],[papier]).
+gagne([pierre,ciseaux],[pierre]).
+gagne([ciseaux,papier],[ciseaux]).
+gagne([papier,ciseaux],[]).
+gagne([pierre,papier],[]).
+gagne([ciseaux,pierre],[]).
+
+strategie31(_N,[[C11,C21],[C12,C22],[C13,C23]|_L],Coup) :- 
+    gagne([C11,C21],R1),
+    gagne([C12,C22],R2),
+    gagne([C13,C23],R3),
+    eval(R1,R2,R3,Coup).
+
+strategie31(_N,[[C11,C21],[C12,C22]|[]],Coup) :- 
+    gagne([C11,C21],R1),
+    gagne([C12,C22],R2),
+    eval(R1,R2,[],Coup)
+
+strategie31(N,[[C11,C21]|[]],Coup):-
+    strategie14(N,[[C11,C21]|[]],Coup).
+
+strategie31(_N,[],papier).
+
+%% strategie21 de type IA-2 (stratégie qui dépend de l'analyse des 2 dernières manches) 
+%% stratégie pour le joueur 1 qui regarde les 2 dernières manches et suppose que le joueur 2 alterne sur 2 stratégies seulement
+
+strategie21(N,[[C11,C21],[C12,C22]|Fin],Coup) :- 
+    strategie12(N,[[C22,C12]|Fin],C21), %ici, on se met dans peua du joueur 2
+    strategie13(N,[[C21,C11]],C2),
+    strategie12(N,[[_,C2]],Coup). %ici, on détourne la stratégie 12 pour nous donner le contre du coup que le joeur 2 va jouer.
+    
+strategie21(N,[[C11,C21],[C12,C22]|Fin],Coup) :- 
+    strategie12(N,[[C22,C12]|Fin],C),
+    not(C=C21),
+    strategie13(N,[[C22,C12]|Fin],C21),
+    strategie12(N,[[C21,C11]],C2),
+    strategie12(N,[[_,C2]],Coup). %ici, on détourne la stratégie 12 pour nous donner le contre du coup que le joeur 2 va jouer.
+
+strategie21(N,[[_C11,_C21]|[]],Coup) :-
+    strategie21(N,[],Coup).
+
+strategie21(_N,[],papier).
+</div>
+
+<div class="nb-cell markdown" name="md9">
+### 1.N Stratégies IA-N
+
+Suggestions pour des stratégies de type IA-N
+</div>
+
+<div class="nb-cell program" data-background="true" name="p7">
+%% strategieN1 de type IA-N (stratégie qui dépend de l'analyse de toutes les manches précédentes) 
+%% stratégie pour le joueur 1 qui regarde toutes les manches pour voir si l'un de ses coups est plus favorable en moyenne
+%%stratégieN1(_N,Histo,Coup).
+
+analyseCoup([[papier]|Fin],[Pap2,Pier,Cis]):-
+    analyseCoup(Fin,[Pap,Pier,Cis]),
+    Pap2 is Pap+1.
+                
+analyseCoup([[pierre]|Fin],[Pap,Pier2,Cis]):-
+    analyseCoup(Fin,[Pap,Pier,Cis]),
+    Pier2 is Pier+1.
+
+
+analyseCoup([[ciseaux]|Fin],[Pap,Pier,Cis2]):-
+    analyseCoup(Fin,[Pap,Pier,Cis]),
+    Cis2 is Cis+1.
+
+analyseCoup([[]|Fin],[Pap,Pier,Cis]):-
+	analyseCoup(Fin,[Pap,Pier,Cis]).
+    
+analyseCoup([],[0,0,0]).
+
+gagneHisto([],[]).
+
+gagneHisto([[C11,C21] | L],[R | CoupsGagnant]) :-
+    gagneHisto(L,CoupsGagnant),
+    gagne([C11,C21],R).
+
+strategieN1(_N,Histo,papier):-
+    gagneHisto(Histo,CoupsGagnant),
+    analyseCoup(CoupsGagnant,[Pap,Pier,Cis]),
+    Pap&gt;Pier,
+    Pap&gt;=Cis.%On prend aussi en compte le cas ou il y a autant de papier que de ciseaux.
+    
+strategieN1(_N,Histo,pierre):-
+    gagneHisto(Histo,CoupsGagnant),
+    analyseCoup(CoupsGagnant,[Pap,Pier,Cis]),
+    Pier&gt;=Pap,
+    Pier&gt;=Cis. %On considère ce cas aussi fonctionnel si il y a autant de coup gagnant de chaque ou s'il y a autant de pierre et papier ou pierre et ciseaux. On prend donc en compte le cas ou je joueur 1 n'as pas gagné.
+
+strategieN1(_N,Histo,ciseaux):-
+    gagneHisto(Histo,CoupsGagnant),
+    analyseCoup(CoupsGagnant,[Pap,Pier,Cis]),
+    Cis&gt;Pap,
+    Cis&gt;Pier.
+
+%% strategieN2 de type IA-N (stratégie qui dépend de l'analyse de toutes les manches précédentes) 
+%% stratégie pour le joueur 1 qui regarde toutes les manches pour voir si l'un des coups du joueurs 2 est plus joué en moyenne
+
+gagneHistoReverse([],[]).
+
+gagneHistoReverse([[C11,C21] | L],[R | CoupsGagnant]) :-
+    gagneHistoReverse(L,CoupsGagnant),
+    gagne([C21,C11],R).
+
+strategieN2(_N,Histo,ciseaux):-
+    gagneHistoReverse(Histo,CoupsGagnant),
+    analyseCoup(CoupsGagnant,[Pap,Pier,Cis]),
+    Pap&gt;Pier,
+    Pap&gt;=Cis.
+    
+strategieN2(_N,Histo,papier):-
+    gagneHistoReverse(Histo,CoupsGagnant),
+    analyseCoup(CoupsGagnant,[Pap,Pier,Cis]),
+    Pier&gt;=Pap,
+    Pier&gt;=Cis. 
+
+strategieN2(_N,Histo,pierre):-
+    gagneHistoReverse(Histo,CoupsGagnant),
+    analyseCoup(CoupsGagnant,[Pap,Pier,Cis]),
+    Cis&gt;Pap,
+    Cis&gt;Pier.
+
+coup2([],[]).
+
+coup2([[_C11,C21] | L],[R | CoupsGagnant]) :-
+    coup2(L,CoupsGagnant),
+    R =  [C21].
+
+strategieN2V2(_N,Histo,ciseaux) :-
+    coup2(Histo,Coups2),
+    analyseCoup(Coups2,[Pap,Pier,Cis]),
+    Pap&gt;Pier,
+    Pap&gt;=Cis.%On prend aussi en compte le cas ou il y a autant de papier que de ciseaux.
+
+strategieN2V2(_N,Histo,papier):-
+    coup2(Histo,Coups2),
+    analyseCoup(Coups2,[Pap,Pier,Cis]),
+    Pier&gt;=Pap,
+    Pier&gt;=Cis. %On considère ce cas aussi fonctionnel si il y a autant de coup gagnant de chaque ou s'il y a autant de pierre et papier ou pierre et ciseaux. On prend donc en compte le cas ou je joueur 1 n'as pas gagné.
+
+strategieN2V2(_N,Histo,pierre):-
+    coup2(Histo,Coups2),
+    analyseCoup(Coups2,[Pap,Pier,Cis]),
+    Cis&gt;Pap,
+    Cis&gt;Pier.
+%% strategieN3 de type IA-N (stratégie qui dépend de l'analyse de toutes les manches précédentes) 
+%% stratégie pour le joueur 1 qui regarde toutes les manches pour voir s'il y a des régularités
+</div>
+
+<div class="nb-cell markdown" name="md7">
+## 2. Gestion d'une partie et comparaison entre stratégies
+
+Une partie est composée de plusieurs manches (le nombre de ces manches doit être défini à l'avance entre joueurs). Chaque manque est composée d'un couple de coups : CoupJoueur1, CoupJoueur2. Chaque coup est à choisir entre pierre, papier, ciseaux.
+
+Les prédicats suivants gèrent une partie entre deux stratégies fixes :
+</div>
+
+<div class="nb-cell program" data-background="true" name="p5">
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%% gestion d'une partie entre 2 stratégies fixes %%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+jouerUneMancheFixe11vsCst(N,R,[Coup1,Coup2]):-
+    strategie11(N,R,Coup1), %% fixe la stratégie du joueur 1
+    strategieCst(N,R,Coup2). %% fixe la stratégie du joueur 2
+   
+jouerUnePartieFixe11vsCst(0,[]).
+jouerUnePartieFixe11vsCst(NombreDeManches,[CoupsDeLaDerniereManche|ResultatsPrécédents]):-
+    {NombreDeManches&gt;0, NMoins = NombreDeManches-1},
+    jouerUnePartieFixe11vsCst(NMoins,ResultatsPrécédents),
+    jouerUneMancheFixe11vsCst(NombreDeManches,ResultatsPrécédents,CoupsDeLaDerniereManche).
+</div>
+
+<div class="nb-cell markdown" name="md10">
+Exemples de partie :
+</div>
+
+<div class="nb-cell query" name="q4">
+jouerUnePartieFixe11vsCst(3,Resultat).
+</div>
+
+<div class="nb-cell query" name="q2">
+jouerUnePartieFixe11vsCst(20,Resultat).
+</div>
+
+<div class="nb-cell markdown" name="md11">
+Pour automatiser l'évaluation des stratégies, la gestion suivante d'une partie est proposée (avec mise en paramètre des stratégies) :
+</div>
+
+<div class="nb-cell program" data-background="true" name="p8">
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%  gestion d'une partie entre stratégies données en paramètre   %%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+jouerUneMancheParametree(S1,S2,N,R,[Coup1,Coup2]):-
+    call(S1,N,R,Coup1), %% pour joueur 1
+    call(S2,N,R,Coup2). %% pour joueur 2
+
+jouerUnePartieParametree(_S1,_S2,0,[]).
+jouerUnePartieParametree(S1,S2,NManches,[ResultatManche|ResultatsPrécédents]):-
+    {NManches&gt;0, NMoins = NManches-1},
+    jouerUnePartieParametree(S1,S2,NMoins,ResultatsPrécédents),
+    jouerUneMancheParametree(S1,S2,NManches,ResultatsPrécédents,ResultatManche).
+</div>
+
+<div class="nb-cell markdown" name="md12">
+Exemples d'utilisation :
+</div>
+
+<div class="nb-cell query" name="q1">
+jouerUnePartieParametree(strategie11,strategieCst,3,R).
+</div>
+
+<div class="nb-cell query" name="q3">
+jouerUnePartieParametree(strategie11,strategieCst,20,R).
+</div>
+
+<div class="nb-cell markdown" name="md13">
+Suggestion d'extensions : 
+* améliorer l'affichage des résultats des manches et parties (vous pouvez même essayer d'ajouter des graphiques [en mode texte ou mieux si vous pouvez])
+* adapter cette gestion d'une partie à des listes de stratégies, ou des listes de couples de stratégies, pour évaluer une stratégie sur plusieurs parties opposant une stratégie à un ensemble de stratégies.
+* ajouter une gestion de partie interactive contre un joueur humain.
+</div>
+
+<div class="nb-cell markdown" name="md14">
+Fin.
+
+A vous de jouer.
+
+Et/ou bon travail !
+</div>
+
+</div>

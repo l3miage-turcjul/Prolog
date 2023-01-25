@@ -1,0 +1,203 @@
+ coupe([Prem|Fin],):-
+        concat2(Lst,LstD,LstF),
+        check(LstD,LstF,0),
+        coupe(LstD)
+        
+    concat2([Prem|LstFin],[Prem],LstFin).
+    
+    check([Lst1Prem|Lst1Dern],[Lst2Prem|Lst2Dern],Res):-
+        check([Lst1Dern],[Lst2Dern],Res).
+        
+    check([],[],1).
+    
+    check(Lst,[],0):-
+        dif(Lst,[]).
+
+% % % % % % % % % % % % % % % % % % % % % % % % %
+% Programme à écrire (main) :
+%   lire une liste d'entiers
+%   couper en deux parties égales (si possible) son début et sa fin
+%   afficher le resultat
+% 
+% si la liste est de longueur impair, mettre un élément de plus dans le début lors de la découpe
+%
+% le programme principal, la lecture et  l'ecriture sont donnés
+%
+% il ne reste plus qu'à ecrire le prédicat qui coupe
+% profil attendu :
+% coupe(en entrée une liste, en sortie deux listes)
+%
+% Indication : si vous pensez qu'un prédicat de concaténation peut aider, 
+%   penser à l'écrire. 
+%   Idem pour un prédicat qui vérifie que deux listes sont de même taille.
+% % % % % % % % % % % % % % % % % % % % % % % % % 
+
+lireListe([E|L]):-
+  readln([E|_]), !,
+  lireListe(L).
+lireListe([]).
+
+
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  %%% debut de votre code ici %%%
+    %coupe([],[],[]).
+    
+    %coupe([_Elem|Fin],[],[]).
+    
+    %coupe([Pr|Fin],[Pr|Debut],FinLst):-
+        %coupe(Fin,Debut,FinLst),
+        %check([Pr|Debut],Fin,0).
+        
+      %coupe([Pr|Fin],[Pr],Fin):-
+        %check([Pr],Fin,1).
+    
+    check([_Lst1Prem|Lst1Fin],[_Lst2Prem|Lst2Fin]):-
+        check(Lst1Fin,Lst2Fin).
+        
+    check([],[]).
+    
+    check([_Elem],[]).
+    
+    coupe(Lst,DebLst,FinLst):-
+        concat2(DebLst,FinLst,Lst), %on fait marcher concat2 à l'enver
+        check(DebLst,FinLst).
+    
+    concat2([],Nb,[Nb]).
+    
+    concat2([Prem|Fin],Lst2,[Prem|Res]):-
+        concat2(Fin,Lst2,Res).
+        
+  %%% fin de votre code  ici  %%%
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+main :- 
+  writeln('Votre liste ? (un entier par ligne, un ligne blanche à la fin)'),
+  lireListe(Entree),
+  coupe(Entree,Debut,Fin),
+  write('Debut :'),
+  writeln(Debut),
+  write('Fin :'),
+  writeln(Fin).
+  
+:- main, halt.
+
+% % % % % % % % % % % % % % % % % % % % % % % % %
+% Programme à écrire (main) :
+%   lire une liste d'entiers (un entier par ligne), liste terminée par une ligne vide
+%   parcourir et calculer la longueur de cette liste
+%   afficher la longueur
+% 
+% le programme principal, la lecture, l'ecriture et le lancement de l'exécution sont donnés
+%
+% il ne reste plus qu'à ecrire le prédicat qui parcoure et calcule la longueur d'une liste
+% profil attendu :
+% longueur(en entrée une liste, en sortie un entier)
+% pour faire +1, vous pourrez utiliser le prédicat inc(S,X) qui pose S=X+1
+% % % % % % % % % % % % % % % % % % % % % % % % % 
+
+inc(S,X):-
+  {S=X+1}.
+
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  %%% debut de votre code ici %%%
+    longueur([],0).
+    
+    longueur([_Prem|Fin],Res):-
+        longueur(Fin,ResPrec),
+        inc(Res,ResPrec).
+
+  %%% fin de votre code  ici  %%%
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% % % % % % % % % % % % % % % % % % % % % % % % %
+% Programme à écrire (main) :
+%   lire une liste d'entiers (un entier par ligne), liste terminée par une ligne vide
+%   dériver la liste 
+%   afficher la liste
+% 
+% le programme principal, la lecture et  l'ecriture sont donnés
+%
+% il ne reste plus qu'à ecrire le prédicat qui dérive une liste (donne la liste des différences 
+% entre les éléments successif de la liste initiale
+% profil attendu :
+% dérive(en entrée une liste, en sortie une liste)
+%
+% % % % % % % % % % % % % % % % % % % % % % % % % 
+
+moins(R,A,B):-
+  {R=A-B}.
+
+lireListe([E|L]):-
+  readln([E|_]), !,
+  lireListe(L).
+lireListe([]).
+
+ecrireListe([]).
+ecrireListe([E|L]):-
+  writeln(E),
+  ecrireListe(L).
+
+
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  %%% debut de votre code ici %%%
+
+    derive([_Prem|[]],[]).
+    
+    derive([Prem,Sec|Fin],[PremRes|LstRes]):-
+        derive([Sec|Fin],LstRes),
+        moins(PremRes,Sec,Prem).
+
+  %%% fin de votre code  ici  %%%
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% % % % % % % % % % % % % % % % % % % % % % % % %
+% Programme à écrire (main) :
+%   lire une liste d'entiers (un entier par ligne), liste terminée par une ligne vide
+%   inverser la liste 
+%   afficher la liste
+% 
+% le programme principal, la lecture et  l'ecriture sont donnés
+%
+% il ne reste plus qu'à ecrire le prédicat qui inverse une liste
+% profil attendu :
+% inverse(en entrée une liste, en sortie une liste)
+%
+% indication : il faut parfois utiliser un prédicat auxiliaire !
+%              (attention : ne pas oublier de définir aussi votre prédicat auxiliaire)
+% % % % % % % % % % % % % % % % % % % % % % % % % 
+
+lireListe([E|L]):-
+  readln([E|_]), !,
+  lireListe(L).
+lireListe([]).
+
+ecrireListe([]).
+ecrireListe([E|L]):-
+  writeln(E),
+  ecrireListe(L).
+
+
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  %%% debut de votre code ici %%%
+
+    inverse([],[]).
+    
+    inverse([Prem|Fin],FinRes2):-
+        inverse(Fin,FinRes),
+        concat2(FinRes,Prem,FinRes2).
+        
+
+    %concat2([],Lst,Lst)
+    %concat2([_Prem|Fin],Nb,Res):-
+    %   concat2(Fin,Nb,Res). 
+
+    %concat2([Prem|[]],Nb,[Prem,Nb]).
+    
+    concat2([],Nb,[Nb]).
+    
+    concat2([Prem|Fin],Lst2,[Prem|Res]):-
+        concat2(Fin,Lst2,Res).
+  %%% fin de votre code  ici  %%%
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
